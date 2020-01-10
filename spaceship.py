@@ -1,32 +1,41 @@
 from load_image import load_image
 import pygame
-from math import sin, cos, pi
+from math import sin, cos, pi, sqrt
 from numpy import arctan2
+from random import uniform
 
 
 # окно
-WIDTH, HEIGHT = 512, 512
+WIDTH, HEIGHT = 1024, 1024
 SCREEN_RECT = (0, 0, WIDTH, HEIGHT)
 
 
 # спрайты
 PLAYER_SPRITE = 'falcon.png'
-BULLET_SPRITE = 'bullet.png'
+PLAYER_BULLET_SPRITE = 'p_bullet.png'
+ENEMY_BULLET_SPRITE = 'e_bullet.png'
 OBSTACLES_SPRITE = 'rock.png'
+ENEMY_SPRITE = 'tie_fighter.png'
+
+ENEMY_SPRITE_W = 53
+ENEMY_SPRITE_H = 48
 
 # характеристики игрока
-PLAYER_SHOOT_KD = 100
+PLAYER_SHOOT_KD = 0.1
 PLAYER_GUN_LEN = 50
 
 # характеристики врага (in angles)
-ACCURACY = 5
+ENEMY_W = 30  # angles in sec
+ENEMY_SHOOT_KD = 0.5
+ACCURACY = 10
 
 
 class Spaceship(pygame.sprite.Sprite):
-    def __init__(self, coords, sprite, group, max_speed=100, max_acceleration=50, direction=0):
+    def __init__(self, coords, sprite, group, max_speed=200, max_acceleration=50,
+                 direction=0, image_w=100, image_h=100):
         super().__init__(group)
 
-        self.image_w, self.image_h = 100, 100
+        self.image_w, self.image_h = image_w, image_h
 
         # исходное изображение для того, чтобы не затирать методом rotate (up_d) картинку
         self.source_image = load_image(sprite)
@@ -60,7 +69,53 @@ class Spaceship(pygame.sprite.Sprite):
         # направление движения
         self.direction = direction
 
+        # таймер выстрела игрока
+        self.shoot_timer = 0
+
+    def get_damage(self, dmg):
+        self.hp -= dmg
+        if self.hp <= 0:
+            self.kill()
+
+    def collision(self, groups):
+        for group in groups:
+            for sprite in group:
+                if pygame.sprite.collide_mask(self, sprite):
+                    self.get_damage(sprite.dmg)
+                    sprite.kill()
+
+    def shoot(self, bullets_type):
+        Bullet([self.x, self.y], PLAYER_BULLET_SPRITE, bullets_type, self.direction)
+
+
+class Player(Spaceship):
+    def event_treatment(self, event):
+        states = pygame.key.get_pressed()
+
+        # acceleration properties
+        new_properties = 0
+
+        if event.type == MOTION:
+            if states[pygame.K_LCTRL]:
+                new_properties = -1
+            elif states[pygame.K_LSHIFT]:
+                new_properties = 1
+
+            self.update_acceleration(new_properties)
+
+        if (event.type == pygame.KEYUP and event.key == pygame.K_SPACE) \
+                or states[pygame.K_SPACE]:
+            if self.shoot_timer >= PLAYER_SHOOT_KD:
+                self.shoot_timer = 0
+                self.shoot(player_bullets)
+
+        if event.type == pygame.MOUSEMOTION:
+            self.update_direction(event.pos)
+
     def update(self, time):
+        # обновление таймера
+        self.shoot_timer += time
+
         # обновление координат
         self.x += (self.speed * time + self.acceleration * (time ** 2) / 2) * cos(self.direction)
         self.y += (self.speed * time + self.acceleration * (time ** 2) / 2) * sin(self.direction)
@@ -76,7 +131,7 @@ class Spaceship(pygame.sprite.Sprite):
             self.speed = 0
 
         # проверка столкновений
-        self.collision()
+        self.collision([enemy_bullets, obstacles])
 
     def update_acceleration(self, prop):
         # обновление ускорения
@@ -104,22 +159,30 @@ class Spaceship(pygame.sprite.Sprite):
         # обновление маски
         self.mask = pygame.mask.from_surface(self.image)
 
-    def collision(self):
-        for obstacle in obstacles:
-            if pygame.sprite.collide_mask(self, obstacle):
-                self.get_damage(self.hp)
 
-        for bullet in enemy_bullets:
-            if pygame.sprite.spritecollideany(self, bullet):
-                self.get_damage(bullet.dmg)
+class Enemy(Spaceship):
+    def update(self, time):
+        # обновление таймера
+        self.shoot_timer += time
 
-    def shoot(self, group, player_pos=None):
-        bullet = Bullet([self.x, self.y], BULLET_SPRITE, group, self.direction)
+        # угол между кораблями
+        direction = arctan2(spaceship.y - self.y, spaceship.x - self.x)
 
-    def get_damage(self, dmg):
-        self.hp -= dmg
-        if self.hp <= 0:
-            self.kill()
+        if self.shoot_timer >= ENEMY_SHOOT_KD:
+            self.shoot_timer = 0
+            direction += uniform(-1, 1) * ACCURACY * pi / 180
+            Bullet([self.x, self.y], ENEMY_BULLET_SPRITE, enemy_bullets, direction)
+
+        r = sqrt((spaceship.x - self.x) ** 2 + (spaceship.y - self.y) ** 2)
+        alpha = arctan2(self.y - spaceship.y, self.x - spaceship.x) + ENEMY_W * time * pi / 180
+
+        self.x = r * cos(alpha) + spaceship.x
+        self.y = r * sin(alpha) + spaceship.y
+
+        self.rect.x = int(self.x)
+        self.rect.y = int(self.y)
+
+        self.collision([player_bullets, obstacles])
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -128,6 +191,8 @@ class Bullet(pygame.sprite.Sprite):
 
         self.image = pygame.transform.rotate(load_image(sprite), 180 - 180 * direction / pi)
         self.rect = self.image.get_rect()
+
+        self.mask = pygame.mask.from_surface(self.image)
 
         self.direction = direction
 
@@ -168,6 +233,7 @@ class Obstacle(pygame.sprite.Sprite):
         super().__init__(group)
 
         self.image = load_image(sprite)
+        self.dmg = 9999
 
         img_w, img_h = self.image.get_size()
         self.image = pygame.transform.scale(self.image,
@@ -194,15 +260,20 @@ if __name__ == '__main__':
     player_bullets = pygame.sprite.Group()
     enemy_bullets = pygame.sprite.Group()
     player = pygame.sprite.Group()
+    enemies = pygame.sprite.Group()
 
-    RENDER_ORDER = [obstacles, enemy_bullets, player_bullets, player]
+    RENDER_ORDER = [obstacles, enemy_bullets, player_bullets, enemies, player]
 
     # test obstacles
     obs_1 = Obstacle((10, 10), OBSTACLES_SPRITE, obstacles)
-    obs_2 = Obstacle((150, 150), OBSTACLES_SPRITE, obstacles, size_w=100)
+    obs_2 = Obstacle((650, 150), OBSTACLES_SPRITE, obstacles, size_w=100)
 
     # player spaceship
-    spaceship = Spaceship([256, 256], PLAYER_SPRITE, player)
+    spaceship = Player([206, 206], PLAYER_SPRITE, player)
+
+    # enemy
+    enemy_1 = Enemy([206, 0], ENEMY_SPRITE, enemies,
+                    image_h=ENEMY_SPRITE_H, image_w=ENEMY_SPRITE_W)
 
     # clock
     clock = pygame.time.Clock()
@@ -211,40 +282,16 @@ if __name__ == '__main__':
     MOTION = 30
     pygame.time.set_timer(MOTION, 5)
 
-    # таймер выстрела игрока
-    shoot_timer = 0
-
     running = True
     while running:
         screen.fill((0, 0, 0))
 
-        # acceleration properties
-        new_properties = 0
-
-        states = pygame.key.get_pressed()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT:
                 running = False
-
-            if event.type == MOTION:
-                if states[pygame.K_LCTRL]:
-                    new_properties = -1
-                elif states[pygame.K_LSHIFT]:
-                    new_properties = 1
-
-                spaceship.update_acceleration(new_properties)
-
-            if (event.type == pygame.KEYUP and event.key == pygame.K_SPACE) \
-                    or states[pygame.K_SPACE]:
-                if shoot_timer >= PLAYER_SHOOT_KD:
-                    shoot_timer = 0
-                    spaceship.shoot(player_bullets)
-
-            if event.type == pygame.MOUSEMOTION:
-                spaceship.update_direction(event.pos)
+            spaceship.event_treatment(e)
 
         t = clock.tick()
-        shoot_timer += t
 
         for sprite_group in RENDER_ORDER:
             sprite_group.update(t / 1000)
