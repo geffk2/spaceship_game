@@ -3,31 +3,7 @@ import pygame
 from math import sin, cos, pi, sqrt
 from numpy import arctan2
 from random import uniform
-
-
-# окно
-WIDTH, HEIGHT = 1024, 1024
-SCREEN_RECT = (0, 0, WIDTH, HEIGHT)
-
-
-# спрайты
-PLAYER_SPRITE = 'falcon.png'
-PLAYER_BULLET_SPRITE = 'p_bullet.png'
-ENEMY_BULLET_SPRITE = 'e_bullet.png'
-OBSTACLES_SPRITE = 'rock.png'
-ENEMY_SPRITE = 'tie_fighter.png'
-
-ENEMY_SPRITE_W = 53
-ENEMY_SPRITE_H = 48
-
-# характеристики игрока
-PLAYER_SHOOT_KD = 0.1
-PLAYER_GUN_LEN = 50
-
-# характеристики врага (in angles)
-ENEMY_W = 30  # angles in sec
-ENEMY_SHOOT_KD = 0.5
-ACCURACY = 10
+from constants import *
 
 
 class Spaceship(pygame.sprite.Sprite):
@@ -72,10 +48,14 @@ class Spaceship(pygame.sprite.Sprite):
         # таймер выстрела игрока
         self.shoot_timer = 0
 
+        # hp bar
+        self.hp_bar = HpBar(self, hp_bars)
+
     def get_damage(self, dmg):
         self.hp -= dmg
         if self.hp <= 0:
             self.kill()
+            self.hp_bar.kill()
 
     def collision(self, groups):
         for group in groups:
@@ -130,8 +110,11 @@ class Player(Spaceship):
         if self.speed < 0:
             self.speed = 0
 
+        # hp bar
+        self.hp_bar.set_coords(self.x - PLAYER_SPRITE_W / 2, self.y - PLAYER_SPRITE_H / 2)
+
         # проверка столкновений
-        self.collision([enemy_bullets, obstacles])
+        self.collision([enemy_bullets, obstacles, enemies])
 
     def update_acceleration(self, prop):
         # обновление ускорения
@@ -181,6 +164,8 @@ class Enemy(Spaceship):
 
         self.rect.x = int(self.x)
         self.rect.y = int(self.y)
+
+        self.hp_bar.set_coords(self.x, self.y)
 
         self.collision([player_bullets, obstacles])
 
@@ -250,6 +235,30 @@ class Camera:
     pass
 
 
+class HpBar(pygame.sprite.Sprite):
+    def __init__(self, obj, group):
+        super().__init__(group)
+
+        self.max_hp = obj.hp
+        self.image = pygame.Surface([HP_BARS_W, HP_BARS_H])
+        self.image.fill(pygame.Color('green'))
+
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = obj.rect.x, obj.rect.y - HP_BARS_H
+
+        self.obj = obj
+        self.size = obj.image_w, obj.image_h
+
+    def update(self, *args):
+        for col in range(HP_BARS_W):
+            color = 'green' if col < HP_BARS_W * self.obj.hp / self.max_hp else 'red'
+            for row in range(HP_BARS_H):
+                self.image.set_at((col, row), pygame.Color(color))
+
+    def set_coords(self, x, y):
+        self.rect.x, self.rect.y = int(x), int(y - 5)
+
+
 if __name__ == '__main__':
 
     pygame.init()
@@ -261,15 +270,18 @@ if __name__ == '__main__':
     enemy_bullets = pygame.sprite.Group()
     player = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
+    hp_bars = pygame.sprite.Group()
 
-    RENDER_ORDER = [obstacles, enemy_bullets, player_bullets, enemies, player]
+    RENDER_ORDER = [obstacles, enemy_bullets, player_bullets,
+                    enemies, player, hp_bars]
 
     # test obstacles
     obs_1 = Obstacle((10, 10), OBSTACLES_SPRITE, obstacles)
     obs_2 = Obstacle((650, 150), OBSTACLES_SPRITE, obstacles, size_w=100)
 
     # player spaceship
-    spaceship = Player([206, 206], PLAYER_SPRITE, player)
+    spaceship = Player([206, 206], PLAYER_SPRITE, player,
+                       image_w=PLAYER_SPRITE_W, image_h=PLAYER_SPRITE_H)
 
     # enemy
     enemy_1 = Enemy([206, 0], ENEMY_SPRITE, enemies,
