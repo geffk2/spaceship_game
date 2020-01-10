@@ -4,23 +4,39 @@ from math import sin, cos, pi
 from numpy import arctan2
 
 
+# окно
+WIDTH, HEIGHT = 512, 512
+SCREEN_RECT = (0, 0, WIDTH, HEIGHT)
+
+
+# спрайты
 PLAYER_SPRITE = 'falcon.png'
 BULLET_SPRITE = 'bullet.png'
 OBSTACLES_SPRITE = 'rock.png'
 
+# характеристики игрока
+PLAYER_SHOOT_KD = 100
+PLAYER_GUN_LEN = 50
+
+# характеристики врага (in angles)
+ACCURACY = 5
+
 
 class Spaceship(pygame.sprite.Sprite):
     def __init__(self, coords, sprite, group, max_speed=100, max_acceleration=50, direction=0):
-        super().__init__(group, all_sprites)
+        super().__init__(group)
 
         self.image_w, self.image_h = 100, 100
 
         # исходное изображение для того, чтобы не затирать методом rotate (up_d) картинку
-        self.source_image = load_image(sprite, -1)
+        self.source_image = load_image(sprite)
         self.source_image = pygame.transform.scale(self.source_image, (self.image_w, self.image_h))
 
         self.image = self.source_image
         self.rect = self.image.get_rect()
+
+        # маска
+        self.mask = pygame.mask.from_surface(self.image)
 
         # hp
         self.hp = 100
@@ -59,11 +75,8 @@ class Spaceship(pygame.sprite.Sprite):
         if self.speed < 0:
             self.speed = 0
 
-        '''if pygame.sprite.spritecollideany(self, obstacles):
-            self.get_damage(self.hp)
-
-        if pygame.sprite.spritecollideany(self, enemy_bullets):
-            self.get_damage(10)'''
+        # проверка столкновений
+        self.collision()
 
     def update_acceleration(self, prop):
         # обновление ускорения
@@ -83,6 +96,22 @@ class Spaceship(pygame.sprite.Sprite):
 
         # rotate image
         self.image = pygame.transform.rotate(self.source_image, 360 - 180 * self.direction / pi)
+        self.image_w, self.image_h = self.image.get_size()
+
+        self.rect.x = int(self.x - self.image_w / 2)
+        self.rect.y = int(self.y - self.image_h / 2)
+
+        # обновление маски
+        self.mask = pygame.mask.from_surface(self.image)
+
+    def collision(self):
+        for obstacle in obstacles:
+            if pygame.sprite.collide_mask(self, obstacle):
+                self.get_damage(self.hp)
+
+        for bullet in enemy_bullets:
+            if pygame.sprite.spritecollideany(self, bullet):
+                self.get_damage(bullet.dmg)
 
     def shoot(self, group, player_pos=None):
         bullet = Bullet([self.x, self.y], BULLET_SPRITE, group, self.direction)
@@ -90,17 +119,14 @@ class Spaceship(pygame.sprite.Sprite):
     def get_damage(self, dmg):
         self.hp -= dmg
         if self.hp <= 0:
-            self.die()
-
-    def die(self):
-        self.kill()
+            self.kill()
 
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, coords, sprite, group, direction, dmg=10, speed=500):
-        super().__init__(group, all_sprites)
+        super().__init__(group)
 
-        self.image = pygame.transform.rotate(load_image(sprite, -1), 360 - 180 * direction / pi)
+        self.image = pygame.transform.rotate(load_image(sprite), 180 - 180 * direction / pi)
         self.rect = self.image.get_rect()
 
         self.direction = direction
@@ -108,9 +134,20 @@ class Bullet(pygame.sprite.Sprite):
         self.x = coords[0]
         self.y = coords[1]
 
-        # координаты изображения
-        self.rect.x = int(coords[0])
-        self.rect.y = int(coords[1])
+        # подгон начала пули под пушку корабля
+        angle = 180 - 180 * direction / pi
+        img_w, img_h = self.image.get_size()
+
+        if 0 < angle < 90:
+            self.y -= img_h
+        if 90 < angle < 180:
+            self.x -= img_w
+            self.y -= img_h
+        if 180 < angle < 270:
+            self.x -= img_w
+
+        self.x += cos(self.direction) * PLAYER_GUN_LEN
+        self.y += sin(self.direction) * PLAYER_GUN_LEN
 
         self.dmg = dmg
         self.speed = speed
@@ -122,19 +159,20 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.x = int(self.x)
         self.rect.y = int(self.y)
 
-        if not self.rect.colliderect(screen_rect):
+        if not self.rect.colliderect(SCREEN_RECT):
             self.kill()
 
 
 class Obstacle(pygame.sprite.Sprite):
     def __init__(self, coords, sprite, group, size_w=50):
-        super().__init__(group, all_sprites)
+        super().__init__(group)
 
-        self.image = load_image(sprite, -1)
+        self.image = load_image(sprite)
 
         img_w, img_h = self.image.get_size()
         self.image = pygame.transform.scale(self.image,
                                             (size_w, img_h * size_w // img_h))
+        self.mask = pygame.mask.from_surface(self.image)
 
         self.rect = self.image.get_rect()
 
@@ -149,23 +187,22 @@ class Camera:
 if __name__ == '__main__':
 
     pygame.init()
-    w, h = 512, 512
-    screen = pygame.display.set_mode((w, h))
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
     # groups
-    all_sprites = pygame.sprite.Group()
     obstacles = pygame.sprite.Group()
     player_bullets = pygame.sprite.Group()
+    enemy_bullets = pygame.sprite.Group()
+    player = pygame.sprite.Group()
+
+    RENDER_ORDER = [obstacles, enemy_bullets, player_bullets, player]
 
     # test obstacles
     obs_1 = Obstacle((10, 10), OBSTACLES_SPRITE, obstacles)
     obs_2 = Obstacle((150, 150), OBSTACLES_SPRITE, obstacles, size_w=100)
 
     # player spaceship
-    spaceship = Spaceship([256, 256], PLAYER_SPRITE, all_sprites)
-
-    # screen rect obj
-    screen_rect = (0, 0, w, h)
+    spaceship = Spaceship([256, 256], PLAYER_SPRITE, player)
 
     # clock
     clock = pygame.time.Clock()
@@ -174,13 +211,12 @@ if __name__ == '__main__':
     MOTION = 30
     pygame.time.set_timer(MOTION, 5)
 
-    # кд выстрела игрока
-    PLAYER_SHOOT_KD = 100
+    # таймер выстрела игрока
     shoot_timer = 0
 
     running = True
     while running:
-        screen.fill((255, 255, 255))
+        screen.fill((0, 0, 0))
 
         # acceleration properties
         new_properties = 0
@@ -210,7 +246,8 @@ if __name__ == '__main__':
         t = clock.tick()
         shoot_timer += t
 
-        all_sprites.update(t / 1000)
-        all_sprites.draw(screen)
+        for sprite_group in RENDER_ORDER:
+            sprite_group.update(t / 1000)
+            sprite_group.draw(screen)
         pygame.display.flip()
 
