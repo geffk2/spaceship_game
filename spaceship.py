@@ -227,12 +227,52 @@ class Obstacle(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
 
-        self.rect.x = int(coords[0])
-        self.rect.y = int(coords[1])
+        self.x, self.y = coords
+        self.rect.x = int(self.x)
+        self.rect.y = int(self.y)
+
+    def update(self, time):
+        self.rect.x = int(self.x)
+        self.rect.y = int(self.y)
 
 
 class Camera:
-    pass
+    def __init__(self, obj):
+        self.obj = obj
+        self.focus_state = False
+
+        self.timer_start = False
+        self.double_click_timer = 0
+
+        self.focus()
+
+    def apply(self, obj):
+        obj.x += self.dx
+        obj.y += self.dy
+
+    def update(self, time):
+        if self.timer_start:
+            self.double_click_timer += time
+
+        if self.focus_state:
+            self.focus()
+        else:
+            self.dx = 0
+            self.dy = 0
+
+    def pressed(self):
+        if self.timer_start:
+            if self.double_click_timer <= DOUBLE_CLICK_S:
+                self.focus_state = not self.focus_state
+                self.timer_start = False
+            self.double_click_timer = 0
+        else:
+            self.timer_start = True
+        self.focus()
+
+    def focus(self):
+        self.dx = WIDTH / 2 - self.obj.x
+        self.dy = HEIGHT / 2 - self.obj.y
 
 
 class HpBar(pygame.sprite.Sprite):
@@ -294,19 +334,29 @@ if __name__ == '__main__':
     MOTION = 30
     pygame.time.set_timer(MOTION, 5)
 
+    # camera
+    camera = Camera(spaceship)
+
     running = True
     while running:
         screen.fill((0, 0, 0))
 
+        t = clock.tick() / 1000
+        camera.update(t)
+
         for e in pygame.event.get():
             if e.type == pygame.QUIT:
                 running = False
+            if e.type == pygame.KEYUP:
+                if e.key == pygame.K_t:
+                    camera.pressed()
             spaceship.event_treatment(e)
 
-        t = clock.tick()
-
         for sprite_group in RENDER_ORDER:
-            sprite_group.update(t / 1000)
+            if sprite_group != hp_bars:
+                for sprite in sprite_group:
+                    camera.apply(sprite)
+
+            sprite_group.update(t)
             sprite_group.draw(screen)
         pygame.display.flip()
-
