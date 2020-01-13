@@ -1,5 +1,5 @@
 # окно
-WIDTH, HEIGHT = 1024, 1024
+WIDTH, HEIGHT = 512, 512
 SCREEN_RECT = (0, 0, WIDTH, HEIGHT)
 
 
@@ -29,3 +29,6 @@ PLAYER_GUN_LEN = 50
 ENEMY_W = 30  # angles in sec
 ENEMY_SHOOT_KD = 0.5
 ACCURACY = 10
+
+# управление
+DOUBLE_CLICK_S = 0.5

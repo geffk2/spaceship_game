@@ -1,5 +1,6 @@
 from load_image import load_image
 import pygame
+import sys
 from math import sin, cos, pi, sqrt
 from numpy import arctan2
 from random import uniform
@@ -8,10 +9,12 @@ from constants import *
 
 class Spaceship(pygame.sprite.Sprite):
     def __init__(self, coords, sprite, group, max_speed=200, max_acceleration=50,
-                 direction=0, image_w=100, image_h=100):
+                 direction=0, image_w=100, image_h=100, collision_dmg=30,
+                 hp=100):
         super().__init__(group)
 
         self.image_w, self.image_h = image_w, image_h
+        self.collision_dmg = collision_dmg
 
         # исходное изображение для того, чтобы не затирать методом rotate (up_d) картинку
         self.source_image = load_image(sprite)
@@ -24,7 +27,7 @@ class Spaceship(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
 
         # hp
-        self.hp = 100
+        self.hp = hp
 
         # целочисленные координаты верхнего левого края
         self.rect.x = int(coords[0])
@@ -61,8 +64,11 @@ class Spaceship(pygame.sprite.Sprite):
         for group in groups:
             for sprite in group:
                 if pygame.sprite.collide_mask(self, sprite):
-                    self.get_damage(sprite.dmg)
-                    sprite.kill()
+                    dmg1 = sprite.collision_dmg
+                    dmg2 = self.collision_dmg
+
+                    self.get_damage(dmg1)
+                    sprite.get_damage(dmg2)
 
     def shoot(self, bullets_type):
         Bullet([self.x, self.y], PLAYER_BULLET_SPRITE, bullets_type, self.direction)
@@ -171,7 +177,8 @@ class Enemy(Spaceship):
 
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, coords, sprite, group, direction, dmg=10, speed=500):
+    def __init__(self, coords, sprite, group, direction,
+                 dmg=10, speed=500):
         super().__init__(group)
 
         self.image = pygame.transform.rotate(load_image(sprite), 180 - 180 * direction / pi)
@@ -199,7 +206,11 @@ class Bullet(pygame.sprite.Sprite):
         self.x += cos(self.direction) * PLAYER_GUN_LEN
         self.y += sin(self.direction) * PLAYER_GUN_LEN
 
-        self.dmg = dmg
+        # у каждого объекта есть хп, при ударе от хп
+        # отнимется урон противника
+        self.collision_dmg = dmg
+        self.hp = dmg
+
         self.speed = speed
 
     def update(self, time):
@@ -212,13 +223,20 @@ class Bullet(pygame.sprite.Sprite):
         if not self.rect.colliderect(SCREEN_RECT):
             self.kill()
 
+    def get_damage(self, dmg):
+        self.hp -= dmg
+        if self.hp <= 0:
+            self.kill()
+
 
 class Obstacle(pygame.sprite.Sprite):
-    def __init__(self, coords, sprite, group, size_w=50):
+    def __init__(self, coords, sprite, group, size_w=50,
+                 collision_dmg=50):
         super().__init__(group)
 
         self.image = load_image(sprite)
-        self.dmg = 9999
+        self.collision_dmg = collision_dmg
+        self.hp = collision_dmg
 
         img_w, img_h = self.image.get_size()
         self.image = pygame.transform.scale(self.image,
@@ -234,6 +252,11 @@ class Obstacle(pygame.sprite.Sprite):
     def update(self, time):
         self.rect.x = int(self.x)
         self.rect.y = int(self.y)
+
+    def get_damage(self, dmg):
+        self.hp -= dmg
+        if self.hp <= 0:
+            self.kill()
 
 
 class Camera:
@@ -299,10 +322,87 @@ class HpBar(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = int(x), int(y - 5)
 
 
+class Button:
+    def __init__(self, x, y, w, h, text, col):
+        self.x = x
+        self.y = y
+        self.col = col
+
+        self.w = w
+        self.h = h
+
+        self.text = text
+
+    def draw(self, scr):
+        pygame.draw.rect(scr, self.col, [self.x, self.y, self.w, self.h])
+
+        font = pygame.font.Font('data/StarJedi.ttf', 36)
+        text = font.render(self.text, 1, (255, 255, 255))
+
+        x = self.x + (self.w - text.get_width()) // 2
+        y = self.y + (self.h - text.get_height()) // 2
+
+        scr.blit(text, (x, y))
+
+    def is_selected(self, pos):
+        return self.x <= pos[0] <= self.x + self.w and \
+               self.y <= pos[1] <= self.y + self.h
+
+
+def setting():
+    pass
+
+
+def terminate():
+    pygame.quit()
+    sys.exit()
+
+
+def start_screen():
+    buttons = [
+               Button(WIDTH // 6, HEIGHT // 12, WIDTH // 3,
+                      HEIGHT // 6, 'Play', pygame.Color('black')),
+               Button(WIDTH // 6, 4 * HEIGHT // 12, WIDTH // 3,
+                      HEIGHT // 6, 'Settings', pygame.Color('black')),
+               Button(WIDTH // 6, 7 * HEIGHT // 12, WIDTH // 3,
+                      HEIGHT // 6, 'Quit', pygame.Color('black'))
+               ]
+
+    while True:
+        screen.fill((255, 255, 255))
+
+        for button in buttons:
+            button.draw(screen)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.MOUSEMOTION:
+                for button in buttons:
+                    if button.is_selected(event.pos):
+                        button.col = (255, 255, 0)
+                    else:
+                        button.col = pygame.Color('black')
+            if event.type == pygame.MOUSEBUTTONUP:
+                for button in buttons:
+                    if button.is_selected(event.pos):
+                        idx = buttons.index(button)
+                        if idx == 0:
+                            return
+                        if idx == 1:
+                            setting()
+                        if idx == 2:
+                            terminate()
+
+        pygame.display.flip()
+
+
 if __name__ == '__main__':
 
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
+    start_screen()
 
     # groups
     obstacles = pygame.sprite.Group()
@@ -320,7 +420,7 @@ if __name__ == '__main__':
     obs_2 = Obstacle((650, 150), OBSTACLES_SPRITE, obstacles, size_w=100)
 
     # player spaceship
-    spaceship = Player([206, 206], PLAYER_SPRITE, player,
+    spaceship = Player([206, 206], PLAYER_SPRITE, player, hp=200,
                        image_w=PLAYER_SPRITE_W, image_h=PLAYER_SPRITE_H)
 
     # enemy
@@ -337,8 +437,7 @@ if __name__ == '__main__':
     # camera
     camera = Camera(spaceship)
 
-    running = True
-    while running:
+    while True:
         screen.fill((0, 0, 0))
 
         t = clock.tick() / 1000
@@ -346,7 +445,7 @@ if __name__ == '__main__':
 
         for e in pygame.event.get():
             if e.type == pygame.QUIT:
-                running = False
+                terminate()
             if e.type == pygame.KEYUP:
                 if e.key == pygame.K_t:
                     camera.pressed()
