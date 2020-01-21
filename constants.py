@@ -1,5 +1,8 @@
+from win32api import GetSystemMetrics
+import pygame
+
 # окно
-WIDTH, HEIGHT = 512, 512
+WIDTH, HEIGHT = GetSystemMetrics(0), GetSystemMetrics(1)
 SCREEN_RECT = (0, 0, WIDTH, HEIGHT)
 
 
@@ -9,6 +12,7 @@ PLAYER_BULLET_SPRITE = 'p_bullet.png'
 ENEMY_BULLET_SPRITE = 'e_bullet.png'
 OBSTACLES_SPRITE = 'rock.png'
 ENEMY_SPRITE = 'tie_fighter.png'
+BACKGROUND = 'background.jpg'
 
 # размеры спрайтов
 ENEMY_SPRITE_W = 53
@@ -21,6 +25,8 @@ PLAYER_SPRITE_H = 100
 HP_BARS_W = 40
 HP_BARS_H = 4
 
+PLAYER_HP_BAR_R = 35
+
 # характеристики игрока
 PLAYER_SHOOT_KD = 0.1
 PLAYER_GUN_LEN = 50
@@ -32,3 +38,20 @@ ACCURACY = 10
 
 # управление
 DOUBLE_CLICK_S = 0.5
+
+# groups
+backgrounds = pygame.sprite.Group()
+obstacles = pygame.sprite.Group()
+player_bullets = pygame.sprite.Group()
+enemy_bullets = pygame.sprite.Group()
+player = pygame.sprite.Group()
+enemies = pygame.sprite.Group()
+hp_bars = pygame.sprite.Group()
+
+RENDER_ORDER = [backgrounds, obstacles, enemy_bullets, player_bullets,
+                enemies, player, hp_bars]
+
+# событие движения
+MOTION = 30
+pygame.time.set_timer(MOTION, 5)
+

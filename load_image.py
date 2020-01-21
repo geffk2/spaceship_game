@@ -1,5 +1,6 @@
 import pygame
 import os
+import sys
 
 
 def load_image(name, colorkey=None):
@@ -12,3 +13,8 @@ def load_image(name, colorkey=None):
     else:
         image = image.convert_alpha()
     return image
+
+
+def terminate():
+    pygame.quit()
+    sys.exit()
