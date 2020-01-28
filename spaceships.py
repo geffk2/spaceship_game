@@ -16,24 +16,6 @@ def angle(v1, v2):
     return math.acos(dot_product(v1, v2) / (length(v1) * length(v2)))
 
 
-class PlayerShip(pygame.sprite.Sprite):
-    def __init__(self, group, coordinates, size):
-        super().__init__(group)
-        self.image = load_image('falcon.png', -1, size)
-
-        self.rect = self.image.get_rect()
-        self.move(coordinates)
-
-        self.center_coordinates = (self.rect.x + self.rect.w / 2,
-                                   self.rect.y + self.rect.h / 2)
-
-    def move(self, coordinates):
-        self.rect.x, self.rect.y = coordinates
-
-        self.center_coordinates = (self.rect.x + self.rect.w / 2,
-                                   self.rect.y + self.rect.h / 2)
-
-
 class BossShip(pygame.sprite.Sprite):
     def __init__(self, group, coordinates, size, player):
         super().__init__(group)

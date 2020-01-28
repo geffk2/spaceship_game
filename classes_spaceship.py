@@ -1,7 +1,7 @@
 from math import sin, cos, pi, sqrt
-from numpy import arctan2
+from numpy import arctan2, sqrt, arccos
 from random import uniform
-from classes_bars import HpBar, PlayerBar
+from classes_bars import HpBar, PlayerBar, BossBar
 from bullet import Bullet
 from constants import *
 from load_image import load_image
@@ -54,6 +54,8 @@ class Spaceship(pygame.sprite.Sprite):
         # hp bar
         if bar_type == 'line':
             self.hp_bar = HpBar(self, hp_bars)
+        elif bar_type == 'boss':
+            self.hp_bar = BossBar(self, hp_bars)
         else:
             self.hp_bar = PlayerBar(self, hp_bars)
 
@@ -121,7 +123,7 @@ class Player(Spaceship):
             self.speed = 0
 
         # проверка столкновений
-        self.collision([enemy_bullets, obstacles, enemies])
+        self.collision([enemy_bullets, obstacles, enemies, boss_group])
 
     def update_acceleration(self, prop):
         # обновление ускорения
@@ -177,3 +179,67 @@ class Enemy(Spaceship):
         self.hp_bar.set_coords(self.x, self.y)
 
         self.collision([player_bullets, obstacles])
+
+
+def dot_product(v1, v2):
+    return sum((a*b) for a, b in zip(v1, v2))
+
+
+def length(v):
+    return sqrt(dot_product(v, v))
+
+
+def angle(v1, v2):
+    return arccos(dot_product(v1, v2) / (length(v1) * length(v2)))
+
+
+class BossShip(Spaceship):
+    def __init__(self, coords, sprite, group):
+        super().__init__(coords, sprite, group, image_w=200, image_h=200, hp=1000, bar_type='boss')
+        self.max_shields = 400
+        self.shields = 0
+        self.healing_rate = 1
+        self.current_action = None
+
+        self.attack_timer = 0
+        self.shields_timer = 0
+
+    def get_damage(self, dmg):
+        self.shields_timer = 0
+        if self.shields >= dmg:
+            self.shields -= dmg
+        elif 0 <= self.shields < dmg:
+            dmg -= self.shields
+            self.shields = 0
+            self.hp -= dmg
+        if self.hp < 0:
+            self.kill()
+            self.hp_bar.kill()
+
+    def attack(self, target):
+        direction = arctan2(target.y - self.y, target.x - self.x)
+        direction += uniform(-1, 1) * ACCURACY * pi / 180
+        Bullet([self.x, self.y], ENEMY_BULLET_SPRITE, enemy_bullets, direction, dmg=15)
+
+    def update(self, *args):
+        self.collision([player_bullets])
+
+        self.attack_timer += 1
+        self.shields_timer += 1
+        if self.attack_timer == 800:
+            self.attack_timer = 0
+            self.current_action = ['attack_1', 3]
+        if self.current_action is not None:
+            if self.current_action[0] == 'attack_1':
+                self.attack(args[1])
+                self.current_action[1] -= 1
+            if self.current_action[1] == 0:
+                self.current_action = None
+
+        if self.shields_timer > 1000:
+            self.restore_shields()
+
+    def restore_shields(self):
+        self.shields += self.healing_rate
+        if self.shields > self.max_shields:
+            self.shields = self.max_shields

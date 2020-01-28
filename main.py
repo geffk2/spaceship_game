@@ -61,11 +61,14 @@ obs_2 = Obstacle((650, 150), OBSTACLES_SPRITE, obstacles, size_w=100)
 # player spaceship
 spaceship = Player([206, 206], PLAYER_SPRITE, player, hp=200,
                    image_w=PLAYER_SPRITE_W, image_h=PLAYER_SPRITE_H,
-                   bar_type='circle')
+                   bar_type='circle', max_speed=300)
 
 # enemy
 enemy_1 = Enemy([206, 0], ENEMY_SPRITE, enemies,
                 image_h=ENEMY_SPRITE_H, image_w=ENEMY_SPRITE_W)
+
+# boss
+boss = BossShip([400, 400], ENEMY_SPRITE, boss_group)
 
 # clock
 clock = pygame.time.Clock()

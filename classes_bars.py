@@ -1,5 +1,6 @@
 from constants import *
 from math import pi
+import pygame
 
 
 class HpBar(pygame.sprite.Sprite):
@@ -58,3 +59,29 @@ class PlayerBar(pygame.sprite.Sprite):
         text = self.font.render(f'{int(div * 100)}', 1, (255, 0, 0))
         self.w, self.h = self.font.size(f'{int(div * 100)}')
         self.image.blit(text, (self.r - self.w // 2, self.r - self.h // 2))
+
+
+class BossBar(pygame.sprite.Sprite):
+    def __init__(self, obj, group):
+        super().__init__(group)
+        self.max_hp = obj.hp
+
+        self.image = pygame.Surface([BOSS_BAR_W * WIDTH, BOSS_BAR_H])
+        self.image.fill(pygame.Color('black'))
+        self.image.set_colorkey(self.image.get_at((0, 0)))
+
+        self.rect = self.image.get_rect()
+        self.rect.y = BOSS_BAR_H
+        self.rect.x = (WIDTH - BOSS_BAR_W * WIDTH) / 2
+        self.obj = obj
+
+        self.size = self.rect.w, self.rect.h
+
+    def update(self, *args):
+        self.image.fill(pygame.Color('black'))
+        pygame.draw.rect(self.image, pygame.Color('red'), [0, 0, self.size[0] * self.obj.hp // self.max_hp, BOSS_BAR_H // 2])
+        pygame.draw.rect(self.image, pygame.Color('blue'), [0, BOSS_BAR_H // 2, self.size[0] * self.obj.shields //
+                                                           self.obj.max_shields, BOSS_BAR_H // 2])
+
+        pygame.draw.rect(self.image, pygame.Color('white'), [0, 0, *self.size], 2)
+

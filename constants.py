@@ -27,6 +27,9 @@ HP_BARS_H = 4
 
 PLAYER_HP_BAR_R = 35
 
+BOSS_BAR_W = 0.6    # в % от экрана
+BOSS_BAR_H = 20
+
 # характеристики игрока
 PLAYER_SHOOT_KD = 0.1
 PLAYER_GUN_LEN = 50
@@ -47,8 +50,9 @@ enemy_bullets = pygame.sprite.Group()
 player = pygame.sprite.Group()
 enemies = pygame.sprite.Group()
 hp_bars = pygame.sprite.Group()
+boss_group = pygame.sprite.Group()
 
-RENDER_ORDER = [backgrounds, obstacles, enemy_bullets, player_bullets,
+RENDER_ORDER = [backgrounds, obstacles, enemy_bullets, player_bullets, boss_group,
                 enemies, player, hp_bars]
 
 # событие движения
