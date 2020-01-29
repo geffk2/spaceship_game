@@ -125,6 +125,9 @@ class Player(Spaceship):
         # проверка столкновений
         self.collision([enemy_bullets, obstacles, enemies, boss_group])
 
+    def kill(self):
+        super().kill()
+
     def update_acceleration(self, prop):
         # обновление ускорения
         if prop == 1:
@@ -180,6 +183,10 @@ class Enemy(Spaceship):
 
         self.collision([player_bullets, obstacles])
 
+    def kill(self):
+        boss_group.sprites()[0].spawn()
+        super().kill()
+
 
 def dot_product(v1, v2):
     return sum((a*b) for a, b in zip(v1, v2))
@@ -196,7 +203,7 @@ def angle(v1, v2):
 class BossShip(Spaceship):
     def __init__(self, coords, sprite, group):
         super().__init__(coords, sprite, group, image_w=200, image_h=200, hp=1000, bar_type='boss')
-        self.max_shields = 400
+        self.max_shields = 200
         self.shields = 0
         self.healing_rate = 1
         self.current_action = None
@@ -221,7 +228,14 @@ class BossShip(Spaceship):
         direction += uniform(-1, 1) * ACCURACY * pi / 180
         Bullet([self.x, self.y], ENEMY_BULLET_SPRITE, enemy_bullets, direction, dmg=15)
 
+    def spawn(self):
+        Enemy([self.x, self.y + self.image_h // 2], ENEMY_SPRITE, enemies, image_h=ENEMY_SPRITE_H,
+              image_w=ENEMY_SPRITE_W)
+
     def update(self, *args):
+        self.rect.x = self.x - self.image_w / 2
+        self.rect.y = self.y - self.image_h / 2
+
         self.collision([player_bullets])
 
         self.attack_timer += 1

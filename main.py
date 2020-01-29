@@ -55,7 +55,7 @@ start_screen()
 # Background(backgrounds)
 
 # test obstacles
-obs_1 = Obstacle((10, 10), OBSTACLES_SPRITE, obstacles)
+# obs_1 = Obstacle((10, 10), OBSTACLES_SPRITE, obstacles)
 obs_2 = Obstacle((650, 150), OBSTACLES_SPRITE, obstacles, size_w=100)
 
 # player spaceship
@@ -65,6 +65,13 @@ spaceship = Player([206, 206], PLAYER_SPRITE, player, hp=200,
 
 # enemy
 enemy_1 = Enemy([206, 0], ENEMY_SPRITE, enemies,
+                image_h=ENEMY_SPRITE_H, image_w=ENEMY_SPRITE_W)
+
+enemy_2 = Enemy([0, 206], ENEMY_SPRITE, enemies,
+                image_h=ENEMY_SPRITE_H, image_w=ENEMY_SPRITE_W)
+
+
+enemy_3 = Enemy([0, 0], ENEMY_SPRITE, enemies,
                 image_h=ENEMY_SPRITE_H, image_w=ENEMY_SPRITE_W)
 
 # boss
