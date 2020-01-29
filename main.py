@@ -95,7 +95,7 @@ paused = False
 while True:
     screen.fill((0, 0, 0))
 
-    t = clock.tick() / 1000
+    t = clock.tick(60) / 1000
     camera.update(t)
 
     for e in pygame.event.get():

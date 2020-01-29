@@ -240,7 +240,7 @@ class BossShip(Spaceship):
 
         self.attack_timer += 1
         self.shields_timer += 1
-        if self.attack_timer == 800:
+        if self.attack_timer == 80:
             self.attack_timer = 0
             self.current_action = ['attack_1', 3]
         if self.current_action is not None:
@@ -250,7 +250,7 @@ class BossShip(Spaceship):
             if self.current_action[1] == 0:
                 self.current_action = None
 
-        if self.shields_timer > 1000:
+        if self.shields_timer > 100:
             self.restore_shields()
 
     def restore_shields(self):
