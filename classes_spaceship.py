@@ -63,7 +63,10 @@ class Spaceship(pygame.sprite.Sprite):
         self.hp -= dmg
         if self.hp <= 0:
             self.kill()
-            self.hp_bar.kill()
+
+    def kill(self):
+        super().kill()
+        self.hp_bar.kill()
 
     def collision(self, groups):
         for group in groups:
@@ -80,6 +83,16 @@ class Spaceship(pygame.sprite.Sprite):
 
 
 class Player(Spaceship):
+    def __init__(self, coords, sprite, group, max_speed=200, max_acceleration=50, direction=0, image_w=100, image_h=100,
+                 collision_dmg=30, hp=100, bar_type='line', first_planet=None):
+        super().__init__(coords, sprite, group, max_speed, max_acceleration, direction, image_w, image_h, collision_dmg,
+                         hp, bar_type)
+
+        self.spawn_point = None
+        self.set_spawn(first_planet)
+
+        self.max_hp = hp
+
     def event_treatment(self, event):
         states = pygame.key.get_pressed()
 
@@ -126,7 +139,17 @@ class Player(Spaceship):
         self.collision([enemy_bullets, obstacles, enemies, boss_group])
 
     def kill(self):
-        super().kill()
+        if self.spawn_point is not None:
+            self.speed = 0
+            self.direction = 180
+            self.hp = self.max_hp
+            self.acceleration = 0
+            self.x, self.y = self.spawn_point
+        else:
+            super().kill()
+
+    def shoot(self, bullets_type):
+        Bullet([self.x, self.y], PLAYER_BULLET_SPRITE, bullets_type, self.direction, dmg=30)
 
     def update_acceleration(self, prop):
         # обновление ускорения
@@ -153,6 +176,10 @@ class Player(Spaceship):
 
         # обновление маски
         self.mask = pygame.mask.from_surface(self.image)
+
+    def set_spawn(self, planet):
+        if planet is not None:
+            self.spawn_point = (planet.x - planet.image_w / 2, planet.y + planet.image_h / 2)
 
 
 class Enemy(Spaceship):
@@ -202,11 +229,12 @@ def angle(v1, v2):
 
 class BossShip(Spaceship):
     def __init__(self, coords, sprite, group):
-        super().__init__(coords, sprite, group, image_w=200, image_h=200, hp=1000, bar_type='boss')
+        super().__init__(coords, sprite, group, image_w=BOSS_SPRITE_W, image_h=BOSS_SPRITE_H, hp=1000, bar_type='boss')
         self.max_shields = 200
         self.shields = 0
         self.healing_rate = 1
         self.current_action = None
+        self.phase = None
 
         self.attack_timer = 0
         self.shields_timer = 0
@@ -223,9 +251,9 @@ class BossShip(Spaceship):
             self.kill()
             self.hp_bar.kill()
 
-    def attack(self, target):
+    def attack(self, target, accuracy):
         direction = arctan2(target.y - self.y, target.x - self.x)
-        direction += uniform(-1, 1) * ACCURACY * pi / 180
+        direction += uniform(-1, 1) * accuracy * pi / 180
         Bullet([self.x, self.y], ENEMY_BULLET_SPRITE, enemy_bullets, direction, dmg=15)
 
     def spawn(self):
@@ -240,13 +268,19 @@ class BossShip(Spaceship):
 
         self.attack_timer += 1
         self.shields_timer += 1
-        if self.attack_timer == 80:
-            self.attack_timer = 0
+        if self.attack_timer % 80 == 0 and self.attack_timer % 160 != 0:
             self.current_action = ['attack_1', 3]
+        elif self.attack_timer % 160 == 0:
+            self.current_action = ['attack_2', 3, 0]
         if self.current_action is not None:
             if self.current_action[0] == 'attack_1':
-                self.attack(args[1])
+                self.attack(args[1], ACCURACY)
                 self.current_action[1] -= 1
+            elif self.current_action[0] == 'attack_2':
+                self.current_action[2] += 1
+                if self.current_action[2] % 10 == 0:
+                    self.attack(args[1], 3)
+                    self.current_action[1] -= 1
             if self.current_action[1] == 0:
                 self.current_action = None
 

@@ -12,7 +12,9 @@ PLAYER_BULLET_SPRITE = 'p_bullet.png'
 ENEMY_BULLET_SPRITE = 'e_bullet.png'
 OBSTACLES_SPRITE = 'rock.png'
 ENEMY_SPRITE = 'tie_fighter.png'
+BOSS_SPRITE = 'star_destroyer2.png'
 BACKGROUND = 'background.jpg'
+EARTH_SPRITE = 'planet_earth.jpg'
 
 # размеры спрайтов
 ENEMY_SPRITE_W = 53
@@ -20,6 +22,9 @@ ENEMY_SPRITE_H = 48
 
 PLAYER_SPRITE_W = 100
 PLAYER_SPRITE_H = 100
+
+BOSS_SPRITE_W = 200
+BOSS_SPRITE_H = 400
 
 # hp bars
 HP_BARS_W = 40
@@ -31,7 +36,7 @@ BOSS_BAR_W = 0.6    # в % от экрана
 BOSS_BAR_H = 20
 
 # характеристики игрока
-PLAYER_SHOOT_KD = 0.1
+PLAYER_SHOOT_KD = 0.3
 PLAYER_GUN_LEN = 50
 
 # характеристики врага (in angles)

@@ -5,6 +5,7 @@ from constants import *
 from buttons import Button
 from settings import setting
 from load_image import terminate
+from planet import Planet
 
 
 def start_screen():
@@ -64,18 +65,21 @@ spaceship = Player([206, 206], PLAYER_SPRITE, player, hp=200,
                    bar_type='circle', max_speed=300)
 
 # enemy
+'''
 enemy_1 = Enemy([206, 0], ENEMY_SPRITE, enemies,
                 image_h=ENEMY_SPRITE_H, image_w=ENEMY_SPRITE_W)
 
 enemy_2 = Enemy([0, 206], ENEMY_SPRITE, enemies,
                 image_h=ENEMY_SPRITE_H, image_w=ENEMY_SPRITE_W)
 
-
 enemy_3 = Enemy([0, 0], ENEMY_SPRITE, enemies,
                 image_h=ENEMY_SPRITE_H, image_w=ENEMY_SPRITE_W)
-
+'''
 # boss
-boss = BossShip([400, 400], ENEMY_SPRITE, boss_group)
+boss = BossShip([400, 400], BOSS_SPRITE, boss_group)
+
+earth = Planet([800, 800], EARTH_SPRITE, obstacles)
+spaceship.set_spawn(earth)
 
 # clock
 clock = pygame.time.Clock()
