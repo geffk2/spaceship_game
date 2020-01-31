@@ -26,6 +26,9 @@ class Obstacle(pygame.sprite.Sprite):
         self.rect.x = int(self.x)
         self.rect.y = int(self.y)
 
+    def bullet_collision(self):
+        pass
+
     def get_damage(self, dmg):
         self.hp -= dmg
         if self.hp <= 0:

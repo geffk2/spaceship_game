@@ -40,7 +40,7 @@ PLAYER_SHOOT_KD = 0.3
 PLAYER_GUN_LEN = 50
 
 # характеристики врага (in angles)
-ENEMY_W = 30  # angles in sec
+ENEMY_W = 1  # angles in msec
 ENEMY_SHOOT_KD = 0.5
 ACCURACY = 10
 

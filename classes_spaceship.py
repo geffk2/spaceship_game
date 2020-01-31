@@ -12,6 +12,8 @@ class Spaceship(pygame.sprite.Sprite):
                  direction=0, image_w=100, image_h=100, collision_dmg=30,
                  hp=100, bar_type='line'):
         super().__init__(group)
+        self.last = None
+        self.last_d = None
 
         self.image_w, self.image_h = image_w, image_h
         self.collision_dmg = collision_dmg
@@ -197,11 +199,29 @@ class Enemy(Spaceship):
             direction += uniform(-1, 1) * ACCURACY * pi / 180
             Bullet([self.x, self.y], ENEMY_BULLET_SPRITE, enemy_bullets, direction)
 
-        r = sqrt((spaceship.x - self.x) ** 2 + (spaceship.y - self.y) ** 2)
+        '''r = sqrt((spaceship.x - self.x) ** 2 + (spaceship.y - self.y) ** 2)
         alpha = arctan2(self.y - spaceship.y, self.x - spaceship.x) + ENEMY_W * time * pi / 180
 
         self.x = r * cos(alpha) + spaceship.x
-        self.y = r * sin(alpha) + spaceship.y
+        self.y = r * sin(alpha) + spaceship.y'''
+
+        try:
+            last_bullet = player_bullets.sprites()[-1]
+            if self.last == last_bullet:
+                going_direction = self.last_d
+            else:
+                going_direction = arctan2(self.y - last_bullet.y, self.x - last_bullet.x)
+                self.last = last_bullet
+                self.last_d = going_direction
+
+            if going_direction < last_bullet.direction:
+                going_direction += pi / 2
+            else:
+                going_direction -= pi / 2
+            self.x += going_direction / pi * 180 * cos(going_direction) * ENEMY_W * time
+            self.y += going_direction / pi * 180 * sin(going_direction) * ENEMY_W * time
+        except IndexError:
+            pass
 
         self.rect.x = int(self.x)
         self.rect.y = int(self.y)

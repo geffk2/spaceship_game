@@ -71,10 +71,10 @@ enemy_1 = Enemy([206, 0], ENEMY_SPRITE, enemies,
 
 enemy_2 = Enemy([0, 206], ENEMY_SPRITE, enemies,
                 image_h=ENEMY_SPRITE_H, image_w=ENEMY_SPRITE_W)
-
-enemy_3 = Enemy([0, 0], ENEMY_SPRITE, enemies,
-                image_h=ENEMY_SPRITE_H, image_w=ENEMY_SPRITE_W)
 '''
+enemy_3 = Enemy([0, 0], ENEMY_SPRITE, enemies,
+                image_h=ENEMY_SPRITE_H, image_w=ENEMY_SPRITE_W, hp=100)
+
 # boss
 boss = BossShip([400, 400], BOSS_SPRITE, boss_group)
 
