@@ -48,7 +48,7 @@ class PlayerBar(pygame.sprite.Sprite):
         self.font = pygame.font.Font('data/StarJedi.ttf', 20)
         self.w, self.h = self.font.size('123')
 
-    def update(self, *args):
+    def update(self, *args, text=None):
         self.image.fill(pygame.Color(0, 0, 0))
 
         div = self.obj.hp / self.max_hp
@@ -56,6 +56,8 @@ class PlayerBar(pygame.sprite.Sprite):
                         (0, 0, 2 * self.r, 2 * self.r),
                         pi / 2, pi / 2 + 2 * pi * div,
                         7)
+
+        self.w, self.h = self.font.size(f'{int(div * 100)}')
         text = self.font.render(f'{int(div * 100)}', 1, (255, 0, 0))
         self.w, self.h = self.font.size(f'{int(div * 100)}')
         self.image.blit(text, (self.r - self.w // 2, self.r - self.h // 2))

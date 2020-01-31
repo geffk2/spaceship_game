@@ -166,7 +166,7 @@ class Player(Spaceship):
             self.acceleration = 0
 
     def update_direction(self, view_point):
-        dx, dy = view_point[0] - self.x,  view_point[1] - self.y
+        dx, dy = view_point[0] - self.x, view_point[1] - self.y
         self.direction = arctan2(dy, dx)
 
         # rotate image
@@ -199,27 +199,26 @@ class Enemy(Spaceship):
             direction += uniform(-1, 1) * ACCURACY * pi / 180
             Bullet([self.x, self.y], ENEMY_BULLET_SPRITE, enemy_bullets, direction)
 
-        '''r = sqrt((spaceship.x - self.x) ** 2 + (spaceship.y - self.y) ** 2)
-        alpha = arctan2(self.y - spaceship.y, self.x - spaceship.x) + ENEMY_W * time * pi / 180
-
-        self.x = r * cos(alpha) + spaceship.x
-        self.y = r * sin(alpha) + spaceship.y'''
-
         try:
             last_bullet = player_bullets.sprites()[-1]
             if self.last == last_bullet:
-                going_direction = self.last_d
+                direction = self.last_d
             else:
-                going_direction = arctan2(self.y - last_bullet.y, self.x - last_bullet.x)
+                direction = arctan2(self.y - last_bullet.y, self.x - last_bullet.x)
                 self.last = last_bullet
-                self.last_d = going_direction
+                self.last_d = direction
 
-            if going_direction < last_bullet.direction:
-                going_direction += pi / 2
+            if direction < last_bullet.direction:
+                direction -= pi / 2
             else:
-                going_direction -= pi / 2
-            self.x += going_direction / pi * 180 * cos(going_direction) * ENEMY_W * time
-            self.y += going_direction / pi * 180 * sin(going_direction) * ENEMY_W * time
+                direction += pi / 2
+
+            r = sqrt((spaceship.x - self.x) ** 2 + (spaceship.y - self.y) ** 2)
+            if r > 720:
+                direction = arctan2(spaceship.y - self.y, spaceship.x - self.x)
+
+            self.x += cos(direction) * ENEMY_W * time
+            self.y += sin(direction) * ENEMY_W * time
         except IndexError:
             pass
 
@@ -236,7 +235,7 @@ class Enemy(Spaceship):
 
 
 def dot_product(v1, v2):
-    return sum((a*b) for a, b in zip(v1, v2))
+    return sum((a * b) for a, b in zip(v1, v2))
 
 
 def length(v):
