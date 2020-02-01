@@ -230,7 +230,10 @@ class Enemy(Spaceship):
         self.collision([player_bullets, obstacles])
 
     def kill(self):
-        boss_group.sprites()[0].spawn()
+        try:
+            boss_group.sprites()[0].spawn()
+        except IndexError:
+            pass
         super().kill()
 
 

@@ -1,5 +1,6 @@
 import pygame
 from load_image import load_image
+from constants import player_bullets, enemy_bullets
 
 
 class Obstacle(pygame.sprite.Sprite):
@@ -25,9 +26,16 @@ class Obstacle(pygame.sprite.Sprite):
     def update(self, *args):
         self.rect.x = int(self.x)
         self.rect.y = int(self.y)
+        self.bullet_collision()
 
     def bullet_collision(self):
-        pass
+        for sprite in player_bullets:
+            if pygame.sprite.collide_mask(self, sprite):
+                sprite.kill()
+
+        for sprite in enemy_bullets:
+            if pygame.sprite.collide_mask(self, sprite):
+                sprite.kill()
 
     def get_damage(self, dmg):
         self.hp -= dmg

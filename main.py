@@ -53,14 +53,14 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
 start_screen()
 
 # background
-# Background(backgrounds)
+background_init()
 
 # test obstacles
 # obs_1 = Obstacle((10, 10), OBSTACLES_SPRITE, obstacles)
 obs_2 = Obstacle((650, 150), OBSTACLES_SPRITE, obstacles, size_w=100)
 
 # player spaceship
-spaceship = Player([206, 206], PLAYER_SPRITE, player, hp=999999999200,
+spaceship = Player([WIDTH // 2, HEIGHT // 2], PLAYER_SPRITE, player, hp=200,
                    image_w=PLAYER_SPRITE_W, image_h=PLAYER_SPRITE_H,
                    bar_type='circle', max_speed=300)
 
@@ -73,10 +73,10 @@ enemy_2 = Enemy([0, 206], ENEMY_SPRITE, enemies,
                 image_h=ENEMY_SPRITE_H, image_w=ENEMY_SPRITE_W)
 '''
 enemy_3 = Enemy([0, 0], ENEMY_SPRITE, enemies,
-                image_h=ENEMY_SPRITE_H, image_w=ENEMY_SPRITE_W, hp=99999900)
+                image_h=ENEMY_SPRITE_H, image_w=ENEMY_SPRITE_W)
 
 # boss
-# boss = BossShip([400, 400], BOSS_SPRITE, boss_group)
+boss = BossShip([400, 400], BOSS_SPRITE, boss_group)
 
 earth = Planet([800, 800], EARTH_SPRITE, obstacles)
 spaceship.set_spawn(earth)

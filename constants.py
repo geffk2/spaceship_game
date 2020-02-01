@@ -13,7 +13,7 @@ ENEMY_BULLET_SPRITE = 'e_bullet.png'
 OBSTACLES_SPRITE = 'rock.png'
 ENEMY_SPRITE = 'tie_fighter.png'
 BOSS_SPRITE = 'star_destroyer2.png'
-BACKGROUND = 'background.jpg'
+BACKGROUND = 'stars_jpeg.jpg'
 EARTH_SPRITE = 'planet_earth.jpg'
 
 # размеры спрайтов
@@ -40,7 +40,7 @@ PLAYER_SHOOT_KD = 0.3
 PLAYER_GUN_LEN = 50
 
 # характеристики врага (in angles)
-ENEMY_W = 60  # angles in msec
+ENEMY_W = 120  # angles in msec
 ENEMY_SHOOT_KD = 0.5
 ACCURACY = 10
 
@@ -49,6 +49,8 @@ DOUBLE_CLICK_S = 0.5
 
 # groups
 backgrounds = pygame.sprite.Group()
+stars_background = pygame.sprite.Group()
+
 obstacles = pygame.sprite.Group()
 player_bullets = pygame.sprite.Group()
 enemy_bullets = pygame.sprite.Group()
@@ -57,7 +59,7 @@ enemies = pygame.sprite.Group()
 hp_bars = pygame.sprite.Group()
 boss_group = pygame.sprite.Group()
 
-RENDER_ORDER = [backgrounds, obstacles, enemy_bullets, player_bullets, boss_group,
+RENDER_ORDER = [stars_background, obstacles, enemy_bullets, player_bullets, boss_group,
                 enemies, player, hp_bars]
 
 # событие движения
