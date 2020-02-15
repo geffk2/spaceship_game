@@ -81,7 +81,7 @@ class AnimatedStar(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(stars_background)
         self.frames = []
-        self.cut_sheet(load_image(f'stars\\shining_star_v2.jpg', -1), 5, 2)
+        self.cut_sheet(load_image(f'stars\\shining_star.jpg', -1), 5, 2)
         self.cur_frame = 0
         self.image = self.frames[self.cur_frame]
         self.rect = self.rect.move(choice(range(WIDTH)), choice(range(HEIGHT)))
